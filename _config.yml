@@ -58,7 +58,7 @@ analytics:
   google:
     id: G-HXV28E6BQ2
   goatcounter:
-    id: # fill in your GoatCounter ID
+    id: kmindev
   umami:
     id: # fill in your Umami ID
     domain: # fill in your Umami domain
@@ -72,7 +72,7 @@ analytics:
 
 # Page views settings
 pageviews:
-  provider: # now only supports 'goatcounter'
+  provider: goatcounter
 
 # Prefer color scheme setting.
 #
