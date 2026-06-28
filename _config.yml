@@ -1,0 +1,21 @@
+title: kmindev 기술 블로그
+description: 개발 경험과 기술을 기록하는 공간
+author: kmindev
+email: kangkm0324@gmail.com
+url: "https://kmindev.github.io"
+
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+permalink: /posts/:year/:month/:day/:title/
+
+markdown: kramdown
+highlighter: rouge
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
