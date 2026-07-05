@@ -13,6 +13,10 @@
 - type: rss
   icon: "fas fa-rss"
   noblank: true
+
+- type: tistory
+  icon: "fas fa-blog"
+  url: "https://soonmin.tistory.com"
 # Uncomment and complete the url below to enable more contact options
 #
 # - type: mastodon
