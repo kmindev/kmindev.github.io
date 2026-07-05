@@ -17,7 +17,6 @@
 - type: tistory
   icon: "fas fa-blog"
   url: "https://soonmin.tistory.com"
-  label: "이전 블로그"
 # Uncomment and complete the url below to enable more contact options
 #
 # - type: mastodon

@@ -13,6 +13,10 @@
 
     <a class="site-title d-block" href="{{ '/' | relative_url }}">{{ site.title }}</a>
     <p class="site-subtitle fst-italic mb-0">{{ site.tagline }}</p>
+    <a href="https://soonmin.tistory.com" target="_blank" rel="noopener noreferrer"
+       style="font-size: 0.8rem; margin-top: 0.4rem; display: inline-block;">
+      📝 이전 블로그 →
+    </a>
   </header>
   <!-- .profile-wrapper -->
 
@@ -138,7 +142,6 @@
           {% endunless %}
         >
           <i class="{{ entry.icon }}"></i>
-          {% if entry.label %}<span style="font-size: 0.75rem; margin-left: 0.25rem;">{{ entry.label }}</span>{% endif %}
         </a>
       {% endif %}
     {% endfor %}
