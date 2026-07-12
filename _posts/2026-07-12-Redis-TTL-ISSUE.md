@@ -84,10 +84,10 @@ QA 중에 발견하게 되어 정말 다행이었다..
 
 `LoggingCacheManager` 래핑으로 인한 `afterPropertiesSet()` 미호출로 인해서 발생한 이슈였다.
 
-1. `getCache()` 동작 방식 — `cacheMap`이 왜 중요한가
-   - `getCache()`는 `cacheMap`에서 먼저 캐시를 조회하고, 없으면 `getMissingCache()`로 fallback한다.
-   - `RedisCacheManager.getMissingCache()`는 `initialCacheConfiguration`을 참조하지 않고 `defaultCacheConfiguration`으로 캐시를 새로 생성한다.
-   - 즉, `cacheMap`이 제대로 초기화되지 않으면 cacheName별 TTL 설정이 무시되고 항상 기본값이 적용된다.
+### 1. `getCache()` 동작 방식
+- `getCache()`는 `cacheMap`에서 먼저 캐시를 조회하고, 없으면 `getMissingCache()`로 fallback한다.
+- `RedisCacheManager.getMissingCache()`는 `initialCacheConfiguration`을 참조하지 않고 `defaultCacheConfiguration`으로 캐시를 새로 생성한다.
+- 즉, `cacheMap`이 제대로 초기화되지 않으면 cacheName별 TTL 설정이 무시되고 항상 기본값이 적용된다.
 
 ```java
 // AbstractCacheManager.getCache()
@@ -108,9 +108,11 @@ protected RedisCache getMissingCache(String name) {
 }
 ```
 
-2. `cacheMap` 초기화 흐름 — `afterPropertiesSet()` → `loadCaches()`
-   - `RedisCacheManager`는 `AbstractCacheManager`를 상속하며 `InitializingBean`을 구현한다.
-   - Spring은 빈 등록 시 `afterPropertiesSet()`을 자동 호출하고, 이 흐름을 통해 `withInitialCacheConfigurations()`로 전달한 설정(`initialCacheConfiguration`)을 읽어 cacheName별 TTL이 적용된 `RedisCache`가 `cacheMap`에 등록된다.
+### 2. `cacheMap` 초기화 흐름 — `afterPropertiesSet()` → `loadCaches()`
+- `RedisCacheManager`는 `AbstractCacheManager`를 상속하는데, `AbstractCacheManager`는 `InitializingBean`을 구현한다.
+- Spring은 빈 등록 시 `afterPropertiesSet()`을 호출하며 내부적으로 `RedisCacheManager.loadCaches()`를 호출한다.
+- `loadCaches()`는 `withInitialCacheConfigurations()`로 전달한 `initialCacheConfiguration`을 읽는다.
+- `initialCacheConfiguration`에 설정된 cacheName별 TTL이 적용된 설정이 `cacheMap`에 등록된다.
 
 ```java
 public class RedisCacheManager extends AbstractTransactionSupportingCacheManager { }
@@ -142,13 +144,13 @@ protected Collection<RedisCache> loadCaches() {
 }
 ```
 
-3. `LoggingCacheManager` 래핑 → `afterPropertiesSet()` 미호출 → `cacheMap` 미초기화
-   - `builder.build()` 결과를 `LoggingCacheManager`로 감싸 반환하면 Spring 빈은 `LoggingCacheManager`이고, 내부 `RedisCacheManager(delegate)`는 일반 필드로 존재하게 되어 `delegate.afterPropertiesSet()`이 호출되지 않는다.
-   - 결과적으로 `cacheMap`은 비어있는 상태가 되고, `getCache("session")` 호출 시 항상 `getMissingCache()`로 fallback되어 `defaultCacheConfiguration`(10분)이 적용된다.
+### 3. `LoggingCacheManager` 래핑 → `afterPropertiesSet()` 미호출 → `cacheMap` 미초기화
+- Spring 빈은 `LoggingCacheManager`이고, 내부 `RedisCacheManager(delegate)`는 일반 필드로 존재하게 되어 `delegate.afterPropertiesSet()`이 호출되지 않는다.
+- 결과적으로 `cacheMap`은 비어있는 상태가 되고, `getCache("session")` 호출 시 항상 `getMissingCache()`로 fallback되어 `defaultCacheConfiguration`(10분)이 적용된다.
 
 ## 3. 해결 방법
 
-`LoggingCacheManager`가 `InitializingBean`을 함께 구현하고, `afterPropertiesSet()`을 내부 `RedisCacheManager`에 위임하도록 수정한다.
+`LoggingCacheManager`가 `InitializingBean`을 함께 구현하고, `afterPropertiesSet()`을 내부 `CacheManager`에 위임하도록 수정한다.
 
 ```java
 public class LoggingCacheManager implements CacheManager, InitializingBean {
