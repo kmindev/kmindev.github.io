@@ -84,39 +84,81 @@ QA 중에 발견하게 되어 정말 다행이었다..
 
 `LoggingCacheManager` 래핑으로 인한 `afterPropertiesSet()` 미호출로 인해서 발생한 이슈였다.
 
-`RedisCacheManager`는 `AbstractCacheManager`를 상속하며 `InitializingBean`을 구현한다. Spring은 빈 등록 시 `afterPropertiesSet()`을 자동 호출해 `cacheMap`을 초기화하는데, `builder.build()` 결과를 `LoggingCacheManager`로 감싸 반환하면 Spring 빈은 `LoggingCacheManager`이고, 내부 `RedisCacheManager`는 일반 Java 객체로 존재하게 되어 `afterPropertiesSet()`이 호출되지 않는다.
+1. `withInitialCacheConfigurations` — `initialCacheConfiguration` 필드에 저장만 됨
+  - `withInitialCacheConfigurations()`는 빌더의 `initialCaches`에 저장되고, `build()` 시 `RedisCacheManager` 생성자로 전달되어 `initialCacheConfiguration` 필드에 담긴다. 
+  - 이 시점엔 `cacheMap`에 아무것도 등록되지 않는다.
 
 ```java
-public class LoggingCacheManager implements CacheManager { }
+// RedisCacheManagerBuilder.withInitialCacheConfigurations()
+public RedisCacheManagerBuilder withInitialCacheConfigurations(Map<String, RedisCacheConfiguration> cacheConfigurations) {
+    this.initialCaches.putAll(cacheConfigurations); // 빌더의 initialCaches에 저장
+    return this;
+}
 
+// RedisCacheManagerBuilder.build() → newRedisCacheManager()
+private RedisCacheManager newRedisCacheManager(RedisCacheWriter cacheWriter) {
+    // initialCaches를 RedisCacheManager 생성자에 전달
+    // 생성자 내부에서 this.initialCacheConfiguration.putAll(initialCacheConfigurations)
+    return new RedisCacheManager(cacheWriter, this.cacheDefaults(), this.allowRuntimeCacheCreation, this.initialCaches);
+}
+```
+
+2. `afterPropertiesSet()` → `loadCaches()` → `cacheMap` 초기화
+  - `RedisCacheManager`는 `AbstractCacheManager`를 상속하며 `InitializingBean`을 구현한다. 
+  - Spring은 빈 등록 시 `afterPropertiesSet()`을 자동 호출하고, 이 흐름을 통해 `initialCacheConfiguration`을 읽어 cacheName별 TTL이 적용된 `RedisCache`가 `cacheMap`에 등록된다.
+
+```java
 public class RedisCacheManager extends AbstractTransactionSupportingCacheManager { }
 
-public abstract class AbstractTransactionSupportingCacheManager extends AbstractCacheManager {}
+public abstract class AbstractTransactionSupportingCacheManager extends AbstractCacheManager { }
 
 public abstract class AbstractCacheManager implements CacheManager, InitializingBean {
 
-    // Spring 빈 등록 시 afterPropertiesSet()을 자동 호출해 cacheMap을 초기화
     public void afterPropertiesSet() {
         this.initializeCaches();
     }
 
     public void initializeCaches() {
-        Collection<? extends Cache> caches = this.loadCaches();
+        Collection<? extends Cache> caches = this.loadCaches(); // RedisCacheManager.loadCaches() 호출
         synchronized(this.cacheMap) {
-            this.cacheNames = Collections.emptySet();
             this.cacheMap.clear();
-            Set<String> cacheNames = new LinkedHashSet(caches.size());
-
-            for(Cache cache : caches) {
-                String name = cache.getName();
-                this.cacheMap.put(name, this.decorateCache(cache));
-                cacheNames.add(name);
+            for (Cache cache : caches) {
+                this.cacheMap.put(cache.getName(), this.decorateCache(cache)); // cacheMap에 등록
             }
-
-            this.cacheNames = Collections.unmodifiableSet(cacheNames);
         }
     }
-    
+}
+
+// RedisCacheManager.loadCaches() — initialCacheConfiguration을 읽어 캐시 생성
+protected Collection<RedisCache> loadCaches() {
+    return this.getInitialCacheConfiguration().entrySet().stream()
+        .map((entry) -> this.createRedisCache(entry.getKey(), entry.getValue())) // TTL 30초 적용
+        .toList();
+}
+```
+
+**③ `afterPropertiesSet()` 미호출 시 — `getMissingCache()` fallback**
+
+`builder.build()` 결과를 `LoggingCacheManager`로 감싸 반환하면 Spring 빈은 `LoggingCacheManager`이고, 내부 `RedisCacheManager(delegate)`는 일반 필드로 존재하게 되어 `delegate.afterPropertiesSet()`이 호출되지 않는다. 결과적으로 `cacheMap`은 비어있는 상태가 된다.
+
+이 상태에서 `getCache("session")`이 호출되면 `cacheMap.get("session")`이 null을 반환하고 `getMissingCache()`로 넘어간다. 여기서 `initialCacheConfiguration`은 완전히 무시되고 `defaultCacheConfiguration`(10분)으로 캐시를 새로 생성하는 것이 실제 원인이었다.
+
+```java
+// AbstractCacheManager.getCache()
+public Cache getCache(String name) {
+    Cache cache = this.cacheMap.get(name); // cacheMap이 비어있으므로 null
+    if (cache != null) {
+        return cache;
+    }
+    Cache missingCache = this.getMissingCache(name); // fallback
+    // ...
+}
+
+// RedisCacheManager.getMissingCache()
+protected RedisCache getMissingCache(String name) {
+    return this.isAllowRuntimeCacheCreation()
+        ? this.createRedisCache(name, this.getDefaultCacheConfiguration()) // initialCacheConfiguration 무시, defaultCacheConfiguration(10분)으로 생성
+        : null;
 }
 ```
 
