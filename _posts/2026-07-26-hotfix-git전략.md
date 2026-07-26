@@ -1,5 +1,5 @@
 ---
-title: "긴급 버그 발생 시 hotfix 브랜치 전략"
+title: "hotfix 브랜치 전략"
 date: 2026-07-26 00:00:00 +0900
 categories: [Git]
 tags: [Git, Branch, Hotfix, 배포전략]
