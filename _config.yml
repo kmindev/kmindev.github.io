@@ -14,9 +14,9 @@ timezone: Asia/Seoul
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: kmindev 기술 블로그
+title: kmin.dev
 
-tagline: 개발 경험과 기술을 기록하는 공간
+tagline: 꾸준히 스택 쌓는 중
 
 description: >-
   개발하면서 배운 것들을 기록하는 기술 블로그입니다.
