@@ -43,12 +43,17 @@ Opus 4.6, Sonnet 4.6은 xhigh를 지원하지 않는다.
 
 > 예) Opus 4.6에서 `xhigh`를 선택하면 `high`로 실행한다.
 
-### effort 설정 방법
+### effort 설정 방법 및 예시
 
 ```bash
-/effort high
+/effort {level}    # low, medium, high, xhigh, max
+/effort high       # 예시
 
-claude --effort high
+/effort auto       # 모델 기본값으로 초기화
+/effort            # 인자 없이 실행하면 슬라이더로 선택
+
+claude --effort {level}   # 시작할 때 해당 세션에만 1회 적용
+claude --effort high      # 예시
 ```
 
 ## ultracode
@@ -72,6 +77,7 @@ const audits = await pipeline(found.files, file =>
 
 return audits.filter(Boolean)
 ```
+
 - 발견된 `.ts` 파일 수만큼 서브에이전트에게 위임한다.
 - 파일이 300개면 300개의 서브에이전트가 병렬로 인증 체크를 감사한다.
 
@@ -79,30 +85,30 @@ return audits.filter(Boolean)
 
 워크플로우에 대한 내용은 별도 정리할 예정.
 
-### ultracode 켜는 방법
+Claude가 ultracode를 활성화 하는 방법은 두 가지다.
+
+### 1. 이번 작업만 한 번 켜기
+
+- 세션 effort는 그대로 두고, 지금 시키는 작업 하나만 워크플로우로 처리하고 싶다면 프롬프트에 `ultracode` 키워드를 넣으면 된다.
+- effort 레벨을 바꾸지 않고 그 작업에만 적용되기 때문에 평소엔 `high`나 `medium`으로 두고 큰 작업이 나올 때만 이 키워드로 워크플로우를 트리거하는 게 실용적이다.
+
+```text
+ultracode: src/routes/ 아래 모든 API 엔드포인트에서 인증 체크 누락 감사해줘
+```
+
+### 2. 세션 전체에 켜두기
+
+- 켜두면 Claude가 세션의 모든 실질적인 작업마다 워크플로우가 필요한지를 스스로 판단한다.
+- 요청 하나가 코드 파악용/수정용/검증용 워크플로우 여러 개로 쪼개지기도 해서, 매 요청마다 토큰 소모와 응답 시간이 늘어난다.
 
 ```bash
 /effort ultracode          # 세션 중 전환, 또는 메뉴에서 선택
 claude --effort ultracode  # 시작 시 (v2.1.203 이상 필요)
 ```
 
-세션 전체에 계속 적용되는 방식이라, 세션 내 모든 작업마다 워크플로우로 처리할지를 매번 판단하게 되어 토큰 소모와 응답 시간이 늘어난다.
-
-### 이번 작업만 한 번 켜기
-
-세션 effort는 그대로 두고, 지금 시키는 작업 하나만 워크플로우로 처리하고 싶다면 프롬프트에 `ultracode` 키워드를 넣으면 된다. "워크플로우로 처리해줘" 같은 자연어 요청도 동일하게 동작한다.
-
-```text
-ultracode: src/routes/ 아래 모든 API 엔드포인트에서 인증 체크 누락 감사해줘
-```
-
-이 방식은 세션의 effort 레벨을 바꾸지 않고 그 작업에만 적용되기 때문에, 평소엔 `high`나 `medium`으로 두고 큰 작업이 나올 때만 이 키워드로 워크플로우를 트리거하는 게 실용적이다.
-
-참고로 ultracode는 현재 세션에만 적용되고 새 세션을 시작하면 초기화된다. `CLAUDE_CODE_EFFORT_LEVEL` 환경변수와 `effortLevel` 설정 키도 `"ultracode"` 값은 받지 않는다.
-
 ## 결론
 
-작업의 유형에 따라 단순 모델만 결정하는 것보다 effort도 적절하게 설정하는 것도 토큰, 결과 퀄리티에 중요함.
+작업의 유형에 따라 단순 모델만 결정하는 것보다 effort도 적절하게 설정하는 것도 토큰 절약, 결과 퀄리티에 중요한 영향을 미친다.
 
 평소 코딩 작업은 `high` 기본값으로 충분하고, 복잡한 설계나 대규모 리팩터링처럼 판단이 많이 필요할 때만 `xhigh`/`max`로 올리는 식으로 쓰는 게 낫다.
 
