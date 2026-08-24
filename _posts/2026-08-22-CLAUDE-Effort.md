@@ -65,8 +65,9 @@ claude --effort high      # 예시
 - 이 스크립트가 백그라운드에서 실행되면서 서브에이전트에게 작업을 동시다발적으로 위임한다.
 
 
-### 동작방식 예시)
-프롬프트: `src/routes/ 아래 모든 API 엔드포인트에서 인증 체크 누락 감사해줘`
+### 동작방식 예시
+
+- 프롬프트: `src/routes/ 아래 모든 API 엔드포인트에서 인증 체크 누락 감사해줘`
 
 ```javascript
 const found = await agent('src/routes/ 아래 .ts 파일 전부 나열해줘', { schema: {...} })
@@ -81,11 +82,9 @@ return audits.filter(Boolean)
 - 발견된 `.ts` 파일 수만큼 서브에이전트에게 위임한다.
 - 파일이 300개면 300개의 서브에이전트가 병렬로 인증 체크를 감사한다.
 
-워크플로우에 대한 자세한 내용은 [공식문서](https://code.claude.com/docs/ko/workflows)에서 확인.
+워크플로우에 대한 자세한 내용은 [공식문서](https://code.claude.com/docs/ko/workflows)에서 확인. 별도 포스팅으로 정리할 예정이다.
 
-워크플로우에 대한 내용은 별도 정리할 예정.
-
-Claude가 ultracode를 활성화 하는 방법은 두 가지다.
+## ultracode를 활성화 하는 방법
 
 ### 1. 이번 작업만 한 번 켜기
 
