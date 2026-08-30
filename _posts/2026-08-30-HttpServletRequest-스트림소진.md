@@ -60,7 +60,7 @@ w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.http.con
 Controller 메서드 파라미터에 `@RequestBody`가 붙어있으면 `RequestResponseBodyMethodProcessor`(`HandlerMethodArgumentResolver`의 구현체)가 바인딩을 담당하는데, 
 이 리졸버도 내부적으로 stream을 읽는다. 
 
-필터에서 이미 끝까지 읽어버린 stream이기 때문에, 여기서는 빈 stream만 남아있게 된다.
+필터에서 stream을 끝까지 읽었기 때문에, resolver에서는 빈 stream을 읽게된다.
 
 정리하면 다음과 같다.
 
