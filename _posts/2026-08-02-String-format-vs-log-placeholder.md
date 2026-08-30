@@ -1,7 +1,7 @@
 ---
 title: "String을 조립해서 전달하는 방식 vs log {} (파라미터를 넘기는 방식)"
 date: 2026-08-02 00:00:00 +0900
-categories: [Java]
+categories: [Language/Programming]
 tags: [Java, Logging, SLF4J]
 ---
 

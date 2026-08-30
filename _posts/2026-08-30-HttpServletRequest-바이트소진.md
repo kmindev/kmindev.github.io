@@ -1,7 +1,7 @@
 ---
-title: "[트러블슈팅] HttpServletRequest 바이트 소진으로 인한 이슈"
+title: "[Spring] HttpServletRequest 스트림 소진으로 인한 캐시 적용"
 date: 2026-08-30 00:00:00 +0900
-categories: [트러블슈팅]
+categories: [Language/Programming]
 tags: [Spring, HttpServletRequest, InputStream, Filter, 트러블슈팅]
 ---
 
@@ -64,7 +64,7 @@ Controller 메서드 파라미터에 `@RequestBody`가 붙어있으면 `RequestR
 
 정리하면 다음과 같다.
 
-1. 필터에서 stream read()` → stream 소진
+1. 필터에서 stream `read()` → stream 소진
 2. `RequestResponseBodyMethodProcessor.resolveArgument()`가 내부적으로 stream을 다시 읽으려 하지만, 이미 소진된 상태라 `null` 반환
 3. `@RequestBody`는 기본적으로 `required = true`이므로, `null`인 채로 `HttpMessageNotReadableException` 예외 발생
 

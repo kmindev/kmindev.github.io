@@ -1,7 +1,7 @@
 ---
 title: "[트러블슈팅] CacheManager 래핑 시 afterPropertiesSet() 미호출로 인한 TTL 무시 이슈"
 date: 2026-07-12 00:00:00 +0900
-categories: [트러블슈팅]
+categories: [Language/Programming]
 tags: [Spring, RedisCacheManager, CacheManager, InitializingBean, "@Cacheable", TTL, 트러블슈팅]
 ---
 
