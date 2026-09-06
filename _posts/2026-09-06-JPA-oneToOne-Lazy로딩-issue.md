@@ -2,7 +2,7 @@
 title: "[JPA] 주인이 아닌 OneToOne 관계에서 Lazy로딩이 동작하지 않는 이슈"
 date: 2026-09-06 00:00:00 +0900
 categories: [Language/Programming]
-tags: [JPA, @OneToOne, Lazy로딩, 트러블슈팅]
+tags: [JPA, "@OneToOne", Lazy로딩, 트러블슈팅]
 ---
 
 ## 1. 문제 상황
