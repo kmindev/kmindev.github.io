@@ -14,7 +14,6 @@ Offset 방식은 조건에 맞는 데이터를 정렬된 순서대로 읽으면�
 ```sql
 SELECT *
 FROM table
-WHERE {condition}
 ORDER BY {column}
 LIMIT {size} OFFSET {건너뛸 개수}
 
@@ -27,7 +26,7 @@ SELECT * FROM board order by id limit 10 offset 20; -- 3-page: 21 ~ 30
 
 ### Offset 방식의 한계
 
-**1. offset 깊어질수록 선형적으로 처리시간이 길어짐.**
+#### **1. offset 깊어질수록 선형적으로 처리시간이 길어짐.**
 
 Offset 방식은 매 요청마다 조건에 맞는 데이터를 처음부터 다시 순서대로 세어가며 `OFFSET + LIMIT`개를 읽은 뒤, 앞의 `OFFSET`개는 버리고 나머지 `LIMIT`개만 반환한다. 
 
@@ -36,7 +35,7 @@ Offset 방식은 매 요청마다 조건에 맞는 데이터를 처음부터 다
 그래서 Offset이 커질수록 읽어야 하는 데이터의 양도 함께 늘어나, 뒤쪽 페이지로 갈수록 조회 성능이 점점 느려진다.
 
 
-**2. 데이터 누락/중복 이슈**
+#### **2. 데이터 누락/중복 이슈**
 
 페이지를 순서대로 넘기는 도중 데이터가 삽입/삭제되면, 다음 페이지 조회 시 기준이 되는 순번이 밀리면서 데이터 누락이나 중복이 발생할 수 있다. 
 
@@ -63,7 +62,7 @@ keyset 방식은 마지막에 읽은 key값을 전달받아, 그 값 이후의 �
 ```sql
 SELECT *
 FROM table
-WHERE {condition} AND id > {last_seen_id}
+WHERE id > {last_seen_id}
 ORDER BY id
 LIMIT {size}
 
@@ -83,11 +82,11 @@ Offset처럼 앞부분을 세어가며 지나가는 게 아니라, 인덱스에�
 
 ### Keyset 방식의 한계
 
-**1. 임의의 페이지로 건너뛸 수 없다**
+#### **1. 임의의 페이지로 건너뛸 수 없다**
 
 이전 페이지의 마지막 key값을 알아야 다음 페이지를 조회할 수 있기 때문에, 1페이지 → 2페이지 → 3페이지처럼 순차적으로만 이동할 수 있다.
 
-**2. 정렬 기준이 여러 개면 커서 조건이 복잡해진다**
+#### **2. 정렬 기준이 여러 개면 커서 조건이 복잡해진다**
 
 정렬 기준이 `id` 하나면 `WHERE id > last_id`로 충분하지만, `ORDER BY created_at, id`처럼 정렬 기준이 여러 개면 커서 조건도 함께 늘어난다. 
 
