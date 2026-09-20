@@ -156,7 +156,15 @@ public class Board extends BaseEntity {
 이렇게 하면 `BoardStatistic.id`가 곧 `Board.id`이기 때문에, 존재 여부를 미리 확인할 필요가 없어지니 일반 프록시처럼 다룰 수 있게 되고, 
 지연 로딩은 물론 `default_batch_fetch_size`를 통한 배치 조회(IN 쿼리)까지 정상 동작한다.
 
-다만 이 방법도 DB 설계를 변경해야 하는 비용이 따르고, 이미 운영 중인 테이블이라면 PK/FK를 손봐야 하는 마이그레이션 작업이 필요하다.
+단, 여기서 한 가지 놓치기 쉬운 게 있는데, `Board` 쪽 `@OneToOne(mappedBy = "board", ...)`에 `optional = false`를 반드시 명시해줘야 지연 로딩이 된다.
+
+`optional`의 기본값은 `true`인데, 이 상태로는 JPA가 `BoardStatistic`이 optional 하다고 생각하기에, PK를 공유하고 있어도 여전히 존재 여부를 확인하기 위해 즉시 조회를 해버린다. 
+
+`optional = false`로 명시하면 JPA가 `BoardStatistic`은 무조건 있다고 신뢰하고, 확인 쿼리 없이 바로 프록시를 넣어줄 수 있게 되어 지연 로딩이 가능해진다.
+
+그래서 이 방법은 실제로 `BoardStatistic`이 없는 `Board`가 존재할 수 있는 상황이라면 쓸 수 없다. 그런 경우라면 `optional = true` 기본값을 유지하고 지연 로딩 자체를 포기하거나, 다른 해결 방안을 선택해야 한다.
+
+이 방법도 DB 설계를 변경해야 하는 비용이 따르고, 이미 운영 중인 테이블이라면 PK/FK를 손봐야 하는 마이그레이션 작업이 필요하다.
 
 ```java
 @Entity
@@ -166,7 +174,7 @@ public class Board extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(mappedBy = "board", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "board", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
     private BoardStatistic boardStatistic;
 
   	// ..
